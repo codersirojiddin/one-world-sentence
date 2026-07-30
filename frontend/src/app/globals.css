@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background-color: #faf6ee;
+  color: #1a1a2e;
+}
+
+.blur-sentence {
+  filter: blur(4px);
+  user-select: none;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.blur-sentence:hover {
+  filter: blur(3px);
+}

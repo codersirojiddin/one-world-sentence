@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: one-world-sentence
+    runtime: go
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: .
+    buildCommand: |
+      cd frontend && npm ci && NEXT_PUBLIC_NEON_AUTH_URL=$NEXT_PUBLIC_NEON_AUTH_URL npm run build && cd .. &&
+      rm -rf backend/out && cp -r frontend/out backend/out &&
+      cd backend && go build -o ../bin/server .
+    startCommand: ./bin/server
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        sync: false # Neon.tech pooled connection string, e.g. postgres://user:pass@host/db?sslmode=require
+      - key: UPSTASH_REDIS_URL
+        sync: false # Upstash Redis "rediss://" connection string
+      - key: NEON_AUTH_JWKS_URL
+        sync: false # <Neon Auth "Auth URL">/.well-known/jwks.json — used by the Go backend to verify JWTs
+      - key: NEXT_PUBLIC_NEON_AUTH_URL
+        sync: false # the Neon Auth "Auth URL" itself — baked into the frontend at build time
+    healthCheckPath: /api/health
+    autoDeploy: true
