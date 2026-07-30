@@ -52,7 +52,7 @@ func verify(tokenString string) (*Identity, error) {
 		return nil, errors.New("auth not initialized")
 	}
 
-	token, err := jwt.Parse(tokenString, jwks.Keyfunc, jwt.WithValidMethods([]string{"RS256", "ES256"}))
+	token, err := jwt.Parse(tokenString, jwks.Keyfunc, jwt.WithValidMethods([]string{"EdDSA", "RS256", "ES256"}))
 	if err != nil || !token.Valid {
 		return nil, errors.New("invalid or expired token")
 	}
