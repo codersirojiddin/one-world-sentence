@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import StoryFeed from '@/components/StoryFeed';
 import SentenceComposer from '@/components/SentenceComposer';
 import BookmarkButton from '@/components/BookmarkButton';
+import ExportPdfButton from '@/components/ExportPdfButton';
 import { fetchBook, BookInfo } from '@/lib/books';
 
 const GLOBAL_BOOK_ID = '00000000-0000-0000-0000-000000000001';
@@ -32,11 +33,10 @@ function StoryPage() {
             ? `${book.genre} · started by ${book.owner_name ?? 'someone'}${book.mode === 'collab' ? ' · collaborative' : ''}`
             : ' '}
         </p>
-        {!isGlobal && book && (
-          <div className="mt-3 flex justify-center">
-            <BookmarkButton bookId={bookId} />
-          </div>
-        )}
+        <div className="mt-3 flex justify-center gap-2">
+          {!isGlobal && book && <BookmarkButton bookId={bookId} initialBookmarked={book.is_bookmarked} />}
+          <ExportPdfButton bookId={bookId} bookTitle={isGlobal ? 'One World Sentence' : book?.title ?? 'Story'} />
+        </div>
       </div>
 
       <StoryFeed bookId={bookId} />

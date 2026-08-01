@@ -28,7 +28,9 @@ export default function AccountControls() {
       <Link href="/my-books" className="text-ink/70 hover:text-ember transition-colors">
         My Books
       </Link>
-      <span className="text-ink/50 hidden sm:inline">{data.user.name || data.user.email}</span>
+      <Link href="/profile" className="text-ink/50 hidden sm:inline hover:text-ember transition-colors">
+        {data.user.name || data.user.email}
+      </Link>
       <button
         onClick={async () => {
           await authClient.signOut();

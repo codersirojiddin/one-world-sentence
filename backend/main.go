@@ -61,6 +61,8 @@ func main() {
 			r.Get("/books", handlers.ListBooks)
 			r.Get("/books/{id}", handlers.GetBook)
 			r.Get("/users/{id}/sentences", handlers.ListUserSentences)
+			r.Get("/profiles/check", handlers.CheckUsernameAvailable)
+			r.Get("/profiles/{username}", handlers.GetPublicProfile)
 		})
 
 		// Writes: require a verified Neon Auth session.
@@ -72,6 +74,8 @@ func main() {
 
 			r.Get("/books/mine", handlers.ListMyBooks)
 			r.Get("/books/bookmarked", handlers.ListMyBookmarks)
+			r.Get("/profiles/me", handlers.GetMyProfile)
+			r.Put("/profiles/me", handlers.UpdateMyProfile)
 			r.Post("/books", handlers.CreateBook)
 			r.Patch("/books/{id}", handlers.UpdateBook)
 			r.Post("/books/{id}/bookmark", handlers.ToggleBookmark)

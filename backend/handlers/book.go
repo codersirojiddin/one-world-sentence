@@ -26,6 +26,7 @@ type Book struct {
 	IsOpenForPublic bool      `json:"is_open_for_public"`
 	IsOwner         bool      `json:"is_owner"`
 	IsCollaborator  bool      `json:"is_collaborator"`
+	IsBookmarked    bool      `json:"is_bookmarked"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 
@@ -97,15 +98,17 @@ func attachAccessFlags(ctx context.Context, b *Book, identity *auth.Identity) {
 	}
 	if b.OwnerUserID != nil && *b.OwnerUserID == identity.UserID {
 		b.IsOwner = true
-		return
-	}
-	if b.Mode == "collab" {
+	} else if b.Mode == "collab" {
 		var exists bool
 		_ = db.Pool.QueryRow(ctx, `
 			SELECT EXISTS(SELECT 1 FROM book_collaborators WHERE book_id = $1 AND user_id = $2 AND status = 'active')
 		`, b.ID, identity.UserID).Scan(&exists)
 		b.IsCollaborator = exists
 	}
+	var bookmarked bool
+	_ = db.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM bookmarks WHERE user_id = $1 AND book_id = $2)`,
+		identity.UserID, b.ID).Scan(&bookmarked)
+	b.IsBookmarked = bookmarked
 }
 
 // ListMyBooks handles GET /api/books/mine (auth required) — books the caller owns or

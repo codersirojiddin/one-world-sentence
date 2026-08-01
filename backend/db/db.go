@@ -71,6 +71,16 @@ func Migrate(ctx context.Context) error {
 		created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 	);
 
+	CREATE TABLE IF NOT EXISTS profiles (
+		user_id             TEXT PRIMARY KEY,
+		username            TEXT NOT NULL,
+		display_name        TEXT,
+		bio                 TEXT,
+		username_changed_at TIMESTAMPTZ,
+		created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+	);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_username_lower ON profiles (lower(username));
+
 	CREATE TABLE IF NOT EXISTS book_collaborators (
 		id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		book_id        UUID NOT NULL REFERENCES books(id) ON DELETE CASCADE,

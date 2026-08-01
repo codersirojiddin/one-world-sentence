@@ -11,6 +11,7 @@ export interface FeedSentence {
   status: 'visible' | 'soft_hidden' | 'deleted';
   flag_count: number;
   created_at: string;
+  author_name?: string;
 }
 
 const COLD_START_THRESHOLD_MS = 1500;
@@ -58,6 +59,7 @@ export default function StoryFeed({ bookId }: { bookId: string }) {
             status: event.status,
             flag_count: event.flag_count,
             created_at: event.created_at,
+            author_name: event.author_name,
           });
           return next.sort((a, b) => a.sequence_order - b.sequence_order);
         });

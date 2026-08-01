@@ -12,6 +12,7 @@ export interface BookInfo {
   is_open_for_public: boolean;
   is_owner: boolean;
   is_collaborator: boolean;
+  is_bookmarked: boolean;
   created_at: string;
 }
 

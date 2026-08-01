@@ -27,6 +27,7 @@ export interface SentenceCreatedEvent {
   sequence_order: number;
   content: string;
   author_user_id?: string | null;
+  author_name?: string;
   status: 'visible' | 'soft_hidden' | 'deleted';
   flag_count: number;
   created_at: string;

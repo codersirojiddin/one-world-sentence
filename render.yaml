@@ -9,7 +9,7 @@ services:
     buildCommand: |
       cd frontend && npm ci && NEXT_PUBLIC_NEON_AUTH_URL=$NEXT_PUBLIC_NEON_AUTH_URL npm run build && cd .. &&
       rm -rf backend/out && cp -r frontend/out backend/out &&
-      cd backend && go mod tidy && go build -o ../bin/server .
+      cd backend && go build -o ../bin/server .
     startCommand: ./bin/server
     envVars:
       - key: PORT

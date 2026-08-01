@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/sse';
 import { useAuth } from '@/lib/auth';
 import { BookInfo } from '@/lib/books';
+import ExportPdfButton from '@/components/ExportPdfButton';
 
 const GENRE_SUGGESTIONS = ['Sci-Fi', 'Horror', 'Dark Academia', 'Romance', 'Mystery', 'Fantasy', 'General'];
 
@@ -89,16 +90,15 @@ export default function MyBooksPage() {
         )}
         <div className="grid gap-3">
           {bookshelf?.map((book) => (
-            <Link
-              key={book.id}
-              href={`/?book_id=${book.id}`}
-              className="block border border-ink/10 rounded-xl p-4 bg-white hover:border-library/40 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{book.title}</h3>
+            <div key={book.id} className="border border-ink/10 rounded-xl p-4 bg-white hover:border-library/40 transition-colors">
+              <Link href={`/?book_id=${book.id}`} className="flex items-center justify-between">
+                <h3 className="font-semibold hover:text-ember transition-colors">{book.title}</h3>
                 <span className="text-xs uppercase tracking-wide text-ember/80">{book.genre}</span>
+              </Link>
+              <div className="mt-2">
+                <ExportPdfButton bookId={book.id} bookTitle={book.title} />
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
@@ -264,6 +264,9 @@ function BookCard({ book, onChanged }: { book: BookInfo; onChanged: () => void }
             {expanded ? 'Hide settings' : 'Settings'}
           </button>
         )}
+      </div>
+      <div className="px-4 pb-4 -mt-1">
+        <ExportPdfButton bookId={book.id} bookTitle={book.title} />
       </div>
 
       {expanded && book.is_owner && (
