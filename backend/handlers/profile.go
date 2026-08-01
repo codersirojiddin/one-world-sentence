@@ -185,23 +185,24 @@ func UpdateMyProfile(w http.ResponseWriter, r *http.Request) {
 		if usernameChanging {
 			_, err = db.Pool.Exec(ctx, `
 				UPDATE profiles SET username = $1, display_name = COALESCE(NULLIF($2, ''), display_name),
-				       bio = $3, username_changed_at = now()
+				       bio = $3, username_changed_at = now(), email = COALESCE(NULLIF($5, ''), email)
 				WHERE user_id = $4
-			`, newUsername, displayName, bio, identity.UserID)
+			`, newUsername, displayName, bio, identity.UserID, identity.Email)
 		} else {
 			_, err = db.Pool.Exec(ctx, `
-				UPDATE profiles SET display_name = COALESCE(NULLIF($1, ''), display_name), bio = $2
+				UPDATE profiles SET display_name = COALESCE(NULLIF($1, ''), display_name), bio = $2,
+				       email = COALESCE(NULLIF($4, ''), email)
 				WHERE user_id = $3
-			`, displayName, bio, identity.UserID)
+			`, displayName, bio, identity.UserID, identity.Email)
 		}
 	} else {
 		if displayName == "" {
 			displayName = identity.Name
 		}
 		_, err = db.Pool.Exec(ctx, `
-			INSERT INTO profiles (user_id, username, display_name, bio, username_changed_at)
-			VALUES ($1, $2, $3, $4, now())
-		`, identity.UserID, newUsername, displayName, bio)
+			INSERT INTO profiles (user_id, username, display_name, bio, username_changed_at, email)
+			VALUES ($1, $2, $3, $4, now(), $5)
+		`, identity.UserID, newUsername, displayName, bio, identity.Email)
 	}
 	if err != nil {
 		http.Error(w, "failed to save profile (username may already be taken)", http.StatusConflict)

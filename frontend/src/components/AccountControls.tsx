@@ -28,6 +28,9 @@ export default function AccountControls() {
       <Link href="/my-books" className="text-ink/70 hover:text-ember transition-colors">
         My Books
       </Link>
+      <Link href="/admin" className="text-ink/40 hover:text-ember transition-colors text-xs">
+        Admin
+      </Link>
       <Link href="/profile" className="text-ink/50 hidden sm:inline hover:text-ember transition-colors">
         {data.user.name || data.user.email}
       </Link>

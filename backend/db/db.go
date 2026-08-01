@@ -80,6 +80,15 @@ func Migrate(ctx context.Context) error {
 		created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 	);
 	CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_username_lower ON profiles (lower(username));
+	ALTER TABLE profiles ADD COLUMN IF NOT EXISTS email TEXT;
+
+	CREATE TABLE IF NOT EXISTS banned_users (
+		user_id    TEXT PRIMARY KEY,
+		email      TEXT,
+		reason     TEXT,
+		banned_by  TEXT,
+		banned_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+	);
 
 	CREATE TABLE IF NOT EXISTS book_collaborators (
 		id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -147,6 +156,14 @@ func Close() {
 	if Pool != nil {
 		Pool.Close()
 	}
+}
+
+// IsUserBanned checks whether a user is currently banned from writing (posting/flagging/etc).
+// Banned users can still read the site — only auth.Required-gated write endpoints check this.
+func IsUserBanned(ctx context.Context, userID string) (bool, error) {
+	var banned bool
+	err := Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM banned_users WHERE user_id = $1)`, userID).Scan(&banned)
+	return banned, err
 }
 
 // SyncCollaboratorInvites activates any pending book_collaborators rows whose invited_email

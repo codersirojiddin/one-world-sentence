@@ -32,6 +32,10 @@ Render.com's free tier with Neon (Postgres + Auth) and Upstash (Redis) — **$0 
   listing their books and total sentences written.
 - **Download any book as a PDF**: a title page plus every sentence with its author, generated
   entirely in the browser (no server load, works even while the free-tier instance is asleep).
+- **Admin panel** (`/admin`, gated by `ADMIN_EMAILS`): a stats dashboard (users, books, sentences,
+  flagged/deleted counts), a books view with force-delete, a moderation queue for soft-hidden/
+  deleted sentences with restore/purge actions, and a users view to ban/unban writers (banning
+  blocks posting/flagging/creating books, but reading stays open).
 - **Cold-start resilience**: if the free-tier container is asleep and the first API call takes
   longer than 1.5s, the frontend shows a "Waking up the digital library..." loader.
 
@@ -153,8 +157,17 @@ go build -o server .
 | PUT    | `/api/profiles/me`                            | required    | Create/update username (15-day cooldown), bio, name |
 | GET    | `/api/profiles/check?username=`               | optional    | Live username-availability check                    |
 | GET    | `/api/profiles/{username}`                    | —           | A writer's public profile + their public books       |
+| GET    | `/api/admin/stats`                            | admin only  | Dashboard counts (users, books, sentences, ...)       |
+| GET    | `/api/admin/books`                            | admin only  | Every book with sentence/flag counts                  |
+| DELETE | `/api/admin/books/{id}`                       | admin only  | Force-delete a book (cascades to its sentences)        |
+| GET    | `/api/admin/sentences?status=`                | admin only  | Moderation queue (`soft_hidden`\|`deleted`\|`all`)     |
+| PATCH  | `/api/admin/sentences/{id}`                   | admin only  | Restore or force-purge a sentence                       |
+| GET    | `/api/admin/users`                            | admin only  | Every user with sentence/book counts + ban status       |
+| POST   | `/api/admin/users/{id}/ban`                   | admin only  | Ban a user (blocks writes, not reading)                 |
+| DELETE | `/api/admin/users/{id}/ban`                   | admin only  | Unban a user                                            |
 
-`"required"` endpoints expect `Authorization: Bearer <Neon Auth JWT>`.
+`"required"` endpoints expect `Authorization: Bearer <Neon Auth JWT>`. `"admin only"` endpoints
+additionally require the token's email to be in the `ADMIN_EMAILS` env var (comma-separated).
 
 ## Implementation notes
 

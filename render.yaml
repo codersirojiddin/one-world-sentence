@@ -9,7 +9,7 @@ services:
     buildCommand: |
       cd frontend && npm ci && NEXT_PUBLIC_NEON_AUTH_URL=$NEXT_PUBLIC_NEON_AUTH_URL npm run build && cd .. &&
       rm -rf backend/out && cp -r frontend/out backend/out &&
-      cd backend && go build -o ../bin/server .
+      cd backend && go mod tidy && go build -o ../bin/server .
     startCommand: ./bin/server
     envVars:
       - key: PORT
@@ -22,5 +22,7 @@ services:
         sync: false # <Neon Auth "Auth URL">/.well-known/jwks.json — used by the Go backend to verify JWTs
       - key: NEXT_PUBLIC_NEON_AUTH_URL
         sync: false # the Neon Auth "Auth URL" itself — baked into the frontend at build time
+      - key: ADMIN_EMAILS
+        sync: false # comma-separated emails allowed into /admin, e.g. you@example.com,teammate@example.com
     healthCheckPath: /api/health
     autoDeploy: true

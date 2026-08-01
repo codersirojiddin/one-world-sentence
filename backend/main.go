@@ -83,6 +83,20 @@ func main() {
 			r.Post("/books/{id}/collaborators", handlers.InviteCollaborator)
 			r.Delete("/books/{id}/collaborators/{collaboratorId}", handlers.RemoveCollaborator)
 		})
+
+		// Admin panel: requires the caller's email to be in ADMIN_EMAILS.
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequireAdmin)
+
+			r.Get("/admin/stats", handlers.AdminStats)
+			r.Get("/admin/books", handlers.AdminListBooks)
+			r.Delete("/admin/books/{id}", handlers.AdminDeleteBook)
+			r.Get("/admin/sentences", handlers.AdminListSentences)
+			r.Patch("/admin/sentences/{id}", handlers.AdminUpdateSentenceStatus)
+			r.Get("/admin/users", handlers.AdminListUsers)
+			r.Post("/admin/users/{id}/ban", handlers.AdminBanUser)
+			r.Delete("/admin/users/{id}/ban", handlers.AdminUnbanUser)
+		})
 	})
 
 	// Serve the embedded Next.js static export for everything else.

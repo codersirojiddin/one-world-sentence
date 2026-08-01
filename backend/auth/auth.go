@@ -25,6 +25,7 @@ type ctxKey string
 const identityCtxKey ctxKey = "identity"
 
 var jwks keyfunc.Keyfunc
+var adminEmails = map[string]bool{}
 
 // Init fetches and caches Neon Auth's JWKS so tokens can be verified locally without
 // a network round-trip on every request. NEON_AUTH_JWKS_URL is typically:
@@ -43,7 +44,19 @@ func Init() error {
 		return err
 	}
 	jwks = k
+
+	for _, e := range strings.Split(os.Getenv("ADMIN_EMAILS"), ",") {
+		e = strings.ToLower(strings.TrimSpace(e))
+		if e != "" {
+			adminEmails[e] = true
+		}
+	}
 	return nil
+}
+
+// IsAdminEmail reports whether an email address is in the ADMIN_EMAILS allowlist.
+func IsAdminEmail(email string) bool {
+	return adminEmails[strings.ToLower(strings.TrimSpace(email))]
 }
 
 // verify parses and validates a Neon Auth access token, returning the caller's identity.
@@ -97,6 +110,7 @@ func Optional(next http.Handler) http.Handler {
 
 // Required rejects the request with 401 unless a valid Neon Auth token is present.
 // Used for write endpoints: posting sentences, creating books, managing collaborators.
+// Also blocks banned users with 403 — they can still read the site via Optional-gated routes.
 func Required(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tok := extractBearer(r)
@@ -109,8 +123,34 @@ func Required(next http.Handler) http.Handler {
 			http.Error(w, "invalid or expired session, please sign in again", http.StatusUnauthorized)
 			return
 		}
+		if banned, _ := db.IsUserBanned(r.Context(), id.UserID); banned {
+			http.Error(w, "your account has been suspended", http.StatusForbidden)
+			return
+		}
 		if err := db.SyncCollaboratorInvites(r.Context(), id.UserID, id.Email, id.Name); err != nil {
 			// Non-fatal — collaborator activation can retry on the next request.
+		}
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), identityCtxKey, id)))
+	})
+}
+
+// RequireAdmin rejects the request unless the caller's verified email is in the
+// ADMIN_EMAILS allowlist. Used for the /api/admin/* routes.
+func RequireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tok := extractBearer(r)
+		if tok == "" {
+			http.Error(w, "sign in required", http.StatusUnauthorized)
+			return
+		}
+		id, err := verify(tok)
+		if err != nil {
+			http.Error(w, "invalid or expired session, please sign in again", http.StatusUnauthorized)
+			return
+		}
+		if !IsAdminEmail(id.Email) {
+			http.Error(w, "admin access required", http.StatusForbidden)
+			return
 		}
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), identityCtxKey, id)))
 	})
