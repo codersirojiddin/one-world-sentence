@@ -94,6 +94,7 @@ func CreateSentence(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "sign in required", http.StatusUnauthorized)
 		return
 	}
+	isAdmin := auth.IsAdminEmail(identity.Email)
 
 	var req createSentenceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -105,7 +106,7 @@ func CreateSentence(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "content is required", http.StatusBadRequest)
 		return
 	}
-	if len(req.Content) > maxSentenceLength {
+	if !isAdmin && len(req.Content) > maxSentenceLength {
 		http.Error(w, "sentence exceeds 280 characters", http.StatusBadRequest)
 		return
 	}
@@ -119,7 +120,7 @@ func CreateSentence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !access.IsOwnerOrCollab {
+	if !access.IsOwnerOrCollab && !isAdmin {
 		if !access.IsOpenForPublic {
 			http.Error(w, "this book is not open for public contributions", http.StatusForbidden)
 			return

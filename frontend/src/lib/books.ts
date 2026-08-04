@@ -8,6 +8,7 @@ export interface BookInfo {
   is_global: boolean;
   owner_user_id?: string | null;
   owner_name?: string | null;
+  owner_username?: string | null;
   mode: 'solo' | 'collab';
   is_open_for_public: boolean;
   is_owner: boolean;

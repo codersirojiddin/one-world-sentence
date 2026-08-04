@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import StoryFeed from '@/components/StoryFeed';
 import SentenceComposer from '@/components/SentenceComposer';
@@ -27,11 +28,26 @@ function StoryPage() {
           {isGlobal ? 'The Global Live Story' : book?.title ?? 'Story'}
         </h1>
         <p className="text-ink/50 text-sm mt-1">
-          {isGlobal
-            ? 'Written one sentence at a time, by everyone, forever unfinished.'
-            : book
-            ? `${book.genre} · started by ${book.owner_name ?? 'someone'}${book.mode === 'collab' ? ' · collaborative' : ''}`
-            : ' '}
+          {isGlobal ? (
+            'Written one sentence at a time, by everyone, forever unfinished.'
+          ) : book ? (
+            <>
+              {book.genre} · started by{' '}
+              {book.owner_username ? (
+                <Link
+                  href={`/u?username=${encodeURIComponent(book.owner_username)}`}
+                  className="hover:text-ember transition-colors underline decoration-dotted"
+                >
+                  {book.owner_name ?? book.owner_username}
+                </Link>
+              ) : (
+                book.owner_name ?? 'someone'
+              )}
+              {book.mode === 'collab' ? ' · collaborative' : ''}
+            </>
+          ) : (
+            ' '
+          )}
         </p>
         <div className="mt-3 flex justify-center gap-2">
           {!isGlobal && book && <BookmarkButton bookId={bookId} initialBookmarked={book.is_bookmarked} />}

@@ -116,6 +116,11 @@ func Migrate(ctx context.Context) error {
 	CREATE INDEX IF NOT EXISTS idx_sentences_book_seq ON sentences (book_id, sequence_order ASC);
 	CREATE INDEX IF NOT EXISTS idx_sentences_status ON sentences (status);
 
+	-- Relax the original 280-char DB constraint so admins can post longer entries
+	-- (the 280-char limit is still enforced in the app for everyone else).
+	ALTER TABLE sentences DROP CONSTRAINT IF EXISTS sentences_content_check;
+	ALTER TABLE sentences ADD CONSTRAINT sentences_content_check CHECK (char_length(content) <= 5000);
+
 	CREATE TABLE IF NOT EXISTS sentence_flags (
 		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		sentence_id   UUID NOT NULL REFERENCES sentences(id) ON DELETE CASCADE,

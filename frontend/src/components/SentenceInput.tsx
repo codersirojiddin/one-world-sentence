@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { apiFetch } from '@/lib/sse';
 
-const MAX_LENGTH = 280;
+const DEFAULT_MAX_LENGTH = 280;
 
-export default function SentenceInput({ bookId }: { bookId: string }) {
+export default function SentenceInput({ bookId, maxLength = DEFAULT_MAX_LENGTH }: { bookId: string; maxLength?: number }) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [locked, setLocked] = useState(false);
 
-  const remaining = MAX_LENGTH - content.length;
+  const remaining = maxLength - content.length;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,9 +70,9 @@ export default function SentenceInput({ bookId }: { bookId: string }) {
       <textarea
         id="sentence"
         value={content}
-        onChange={(e) => setContent(e.target.value.slice(0, MAX_LENGTH))}
+        onChange={(e) => setContent(e.target.value.slice(0, maxLength))}
         rows={3}
-        maxLength={MAX_LENGTH}
+        maxLength={maxLength}
         placeholder="And then..."
         className="w-full border border-ink/20 rounded-lg p-3 bg-white focus:outline-none focus:ring-2 focus:ring-library/40 resize-none"
         disabled={submitting || locked}

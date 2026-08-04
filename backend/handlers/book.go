@@ -22,6 +22,7 @@ type Book struct {
 	IsGlobal        bool      `json:"is_global"`
 	OwnerUserID     *string   `json:"owner_user_id,omitempty"`
 	OwnerName       *string   `json:"owner_name,omitempty"`
+	OwnerUsername   *string   `json:"owner_username,omitempty"`
 	Mode            string    `json:"mode"` // solo | collab
 	IsOpenForPublic bool      `json:"is_open_for_public"`
 	IsOwner         bool      `json:"is_owner"`
@@ -34,9 +35,18 @@ func scanBook(row interface {
 	Scan(dest ...interface{}) error
 }) (Book, error) {
 	var b Book
-	err := row.Scan(&b.ID, &b.Title, &b.Genre, &b.Description, &b.IsGlobal, &b.OwnerUserID, &b.OwnerName, &b.Mode, &b.IsOpenForPublic, &b.CreatedAt)
+	err := row.Scan(&b.ID, &b.Title, &b.Genre, &b.Description, &b.IsGlobal, &b.OwnerUserID, &b.OwnerName, &b.OwnerUsername, &b.Mode, &b.IsOpenForPublic, &b.CreatedAt)
 	return b, err
 }
+
+// bookSelectColumns is shared by every book listing query: it joins profiles so the owner's
+// *current* chosen display name and username are used (instead of a stale creation-time
+// snapshot), so a book's byline stays correct if the owner later edits their profile.
+const bookSelectColumns = `
+	b.id, b.title, b.genre, COALESCE(b.description, ''), b.is_global, b.owner_user_id,
+	COALESCE(p.display_name, b.owner_name), p.username, b.mode, b.is_open_for_public, b.created_at
+`
+const bookSelectJoin = `FROM books b LEFT JOIN profiles p ON p.user_id = b.owner_user_id`
 
 // ListBooks handles GET /api/books — the global story plus every genre room, with the
 // caller's ownership/collaboration status attached if they're signed in.
@@ -45,9 +55,9 @@ func ListBooks(w http.ResponseWriter, r *http.Request) {
 	identity := auth.FromContext(ctx)
 
 	rows, err := db.Pool.Query(ctx, `
-		SELECT id, title, genre, COALESCE(description, ''), is_global, owner_user_id, owner_name, mode, is_open_for_public, created_at
-		FROM books
-		ORDER BY created_at ASC
+		SELECT `+bookSelectColumns+`
+		`+bookSelectJoin+`
+		ORDER BY b.created_at ASC
 	`)
 	if err != nil {
 		http.Error(w, "failed to load books", http.StatusInternalServerError)
@@ -78,8 +88,9 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	row := db.Pool.QueryRow(ctx, `
-		SELECT id, title, genre, COALESCE(description, ''), is_global, owner_user_id, owner_name, mode, is_open_for_public, created_at
-		FROM books WHERE id = $1
+		SELECT `+bookSelectColumns+`
+		`+bookSelectJoin+`
+		WHERE b.id = $1
 	`, id)
 	b, err := scanBook(row)
 	if err != nil {
@@ -122,9 +133,9 @@ func ListMyBooks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	rows, err := db.Pool.Query(ctx, `
-		SELECT DISTINCT b.id, b.title, b.genre, COALESCE(b.description, ''), b.is_global,
-		       b.owner_user_id, b.owner_name, b.mode, b.is_open_for_public, b.created_at
+		SELECT DISTINCT `+bookSelectColumns+`
 		FROM books b
+		LEFT JOIN profiles p ON p.user_id = b.owner_user_id
 		LEFT JOIN book_collaborators c ON c.book_id = b.id AND c.user_id = $1 AND c.status = 'active'
 		WHERE b.owner_user_id = $1 OR c.user_id = $1
 		ORDER BY b.created_at DESC
@@ -445,10 +456,10 @@ func ListMyBookmarks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	rows, err := db.Pool.Query(ctx, `
-		SELECT b.id, b.title, b.genre, COALESCE(b.description, ''), b.is_global,
-		       b.owner_user_id, b.owner_name, b.mode, b.is_open_for_public, b.created_at
+		SELECT `+bookSelectColumns+`
 		FROM bookmarks bm
 		JOIN books b ON b.id = bm.book_id
+		LEFT JOIN profiles p ON p.user_id = b.owner_user_id
 		WHERE bm.user_id = $1
 		ORDER BY bm.created_at DESC
 	`, identity.UserID)

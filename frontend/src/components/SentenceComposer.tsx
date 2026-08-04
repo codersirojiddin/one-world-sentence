@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import { fetchBook, BookInfo } from '@/lib/books';
+import { fetchAdminStats } from '@/lib/admin';
 import SentenceInput from './SentenceInput';
 
 export default function SentenceComposer({ bookId }: { bookId: string }) {
   const { data: session, isPending } = useAuth();
   const [book, setBook] = useState<BookInfo | null>(null);
   const [loadingBook, setLoadingBook] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -20,6 +22,13 @@ export default function SentenceComposer({ bookId }: { bookId: string }) {
         setLoadingBook(false);
       }
     });
+    if (session?.user) {
+      fetchAdminStats().then(({ ok }) => {
+        if (!cancelled) setIsAdmin(ok);
+      });
+    } else {
+      setIsAdmin(false);
+    }
     return () => {
       cancelled = true;
     };
@@ -55,5 +64,5 @@ export default function SentenceComposer({ bookId }: { bookId: string }) {
     );
   }
 
-  return <SentenceInput bookId={bookId} />;
+  return <SentenceInput bookId={bookId} maxLength={isAdmin ? 5000 : 280} />;
 }

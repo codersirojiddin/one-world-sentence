@@ -172,6 +172,7 @@ function FlaggedTab() {
   useEffect(load, [status]);
 
   async function handleUpdate(id: string, newStatus: string) {
+    if (newStatus === 'deleted' && !confirm('Permanently purge this sentence? This cannot be undone.')) return;
     if (await updateAdminSentenceStatus(id, newStatus)) load();
   }
 

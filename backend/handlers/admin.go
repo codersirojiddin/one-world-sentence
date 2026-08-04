@@ -54,11 +54,10 @@ type AdminBookRow struct {
 func AdminListBooks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rows, err := db.Pool.Query(ctx, `
-		SELECT b.id, b.title, b.genre, COALESCE(b.description, ''), b.is_global, b.owner_user_id,
-		       b.owner_name, b.mode, b.is_open_for_public, b.created_at,
+		SELECT `+bookSelectColumns+`,
 		       (SELECT COUNT(*) FROM sentences s WHERE s.book_id = b.id AND s.status != 'deleted'),
 		       (SELECT COUNT(*) FROM sentences s WHERE s.book_id = b.id AND s.status = 'soft_hidden')
-		FROM books b
+		`+bookSelectJoin+`
 		ORDER BY b.created_at DESC
 	`)
 	if err != nil {
@@ -71,7 +70,7 @@ func AdminListBooks(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var b AdminBookRow
 		if err := rows.Scan(&b.ID, &b.Title, &b.Genre, &b.Description, &b.IsGlobal, &b.OwnerUserID,
-			&b.OwnerName, &b.Mode, &b.IsOpenForPublic, &b.CreatedAt, &b.SentenceCount, &b.FlaggedCount); err != nil {
+			&b.OwnerName, &b.OwnerUsername, &b.Mode, &b.IsOpenForPublic, &b.CreatedAt, &b.SentenceCount, &b.FlaggedCount); err != nil {
 			http.Error(w, "failed to scan book", http.StatusInternalServerError)
 			return
 		}

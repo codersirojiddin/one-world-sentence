@@ -82,9 +82,9 @@ func GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 		userID).Scan(&p.SentenceCount)
 
 	rows, err := db.Pool.Query(ctx, `
-		SELECT DISTINCT b.id, b.title, b.genre, COALESCE(b.description, ''), b.is_global,
-		       b.owner_user_id, b.owner_name, b.mode, b.is_open_for_public, b.created_at
+		SELECT DISTINCT `+bookSelectColumns+`
 		FROM books b
+		LEFT JOIN profiles p ON p.user_id = b.owner_user_id
 		LEFT JOIN book_collaborators c ON c.book_id = b.id AND c.user_id = $1 AND c.status = 'active'
 		WHERE b.owner_user_id = $1 OR c.user_id = $1
 		ORDER BY b.created_at DESC
