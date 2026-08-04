@@ -2,12 +2,61 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import AuthProvider from '@/components/AuthProvider';
 import AccountControls from '@/components/AccountControls';
+import Footer from '@/components/Footer';
 import '@neondatabase/auth-ui/css';
 import './globals.css';
 
+const SITE_URL = 'https://oneworldsentence.site';
+const TITLE = 'One World Sentence — The Internet is Writing a Book';
+const DESCRIPTION =
+  'Join thousands of people in writing a single story together. One sentence every 24 hours. Vote on plot twists and shape the next line!';
+
 export const metadata: Metadata = {
-  title: 'One World Sentence',
-  description: 'One world. One story. One sentence at a time.',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: '%s · One World Sentence',
+  },
+  description: DESCRIPTION,
+  keywords: [
+    'one world sentence',
+    'collaborative story writing',
+    'internet writes a book',
+    'interactive fiction',
+    'crowdsourced novel',
+    'community story',
+    'daily writing game',
+    'collaborative novel online',
+    'write a story together',
+    'one sentence a day',
+  ],
+  authors: [{ name: 'One World Sentence' }],
+  creator: 'One World Sentence',
+  publisher: 'One World Sentence',
+  robots: { index: true, follow: true },
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: 'One World Sentence',
+    title: TITLE,
+    description: 'One sentence every 24 hours. No single author, just collective chaos and creativity. Add your line today!',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'One World Sentence' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: 'One sentence every 24 hours. Vote and influence the story plot. Join the experiment!',
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -32,9 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </header>
           <main className="max-w-3xl mx-auto px-6 py-10">{children}</main>
-          <footer className="max-w-3xl mx-auto px-6 py-10 text-xs text-ink/40 text-center">
-            Written collectively, one sentence every 24 hours, by anyone, everywhere.
-          </footer>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
